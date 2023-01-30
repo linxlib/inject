@@ -215,7 +215,7 @@ func (inj *injector) Provide(val any) error {
 		return fmt.Errorf("val cannot be nil")
 	}
 	v := reflect.ValueOf(val)
-
+	t0 := v.Type()
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
@@ -226,11 +226,14 @@ func (inj *injector) Provide(val any) error {
 
 	v1 := inj.Value(t)
 	if !v1.IsValid() {
-		return fmt.Errorf("value not found for type %v", t)
+		v2 := inj.Value(t0)
+		if !v2.IsValid() {
+			return fmt.Errorf("value not found for type %v", t)
+		}
+		v.Set(v2.Elem())
+	} else {
+		v.Set(v1)
 	}
-
-	v.Set(v1)
-
 	return nil
 }
 

@@ -213,4 +213,9 @@ func TestProvide(t *testing.T) {
 	c := Provide[SpecialString](inj)
 	assert.NotNil(t, c)
 
+	inj.Map(ii)
+	uu := new(A)
+	err2 := inj.Provide(uu)
+	assert.NoError(t, err2)
+
 }
