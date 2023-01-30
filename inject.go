@@ -200,26 +200,36 @@ func (inj *injector) Apply(val interface{}) error {
 	return nil
 }
 
-func (inj *injector) Provide(val interface{}) error {
+func MapTo[T any](this Injector, val any) TypeMapper {
+	return this.MapTo(val, (*T)(nil))
+}
+
+func Provide[T any](this Injector) T {
+	var a = new(T)
+	this.Provide(a)
+	return *a
+}
+
+func (inj *injector) Provide(val any) error {
+	if val == nil {
+		return fmt.Errorf("val cannot be nil")
+	}
 	v := reflect.ValueOf(val)
 
-	t := v.Type()
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
+	t := v.Type()
+	//if v.Kind() != reflect.Struct {
+	//	return fmt.Errorf("value should be Pointer: %s", v.String()) // Should not panic here ?
+	//}
 
-	if v.Kind() != reflect.Struct {
-		return fmt.Errorf("value should be Pointer") // Should not panic here ?
+	v1 := inj.Value(t)
+	if !v1.IsValid() {
+		return fmt.Errorf("value not found for type %v", t)
 	}
 
-	if v.CanSet() {
-		v1 := inj.Value(t)
-		if !v1.IsValid() {
-			return fmt.Errorf("value not found for type %v", t)
-		}
-
-		v.Set(v1.Elem())
-	}
+	v.Set(v1)
 
 	return nil
 }

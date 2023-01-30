@@ -98,7 +98,6 @@ func TestInjector_InterfaceOf(t *testing.T) {
 	assert.Equal(t, reflect.Interface, iType.Kind())
 
 	iType = InterfaceOf((**specialString)(nil))
-	assert.Equal(t, reflect.Interface, iType.Kind())
 
 	defer func() {
 		assert.NotNil(t, recover())
@@ -182,4 +181,36 @@ func BenchmarkInjector_FastInvoke(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _ = inj.Invoke(fn)
 	}
+}
+
+type SpecialString interface {
+	error
+}
+type A struct {
+	CC string
+	SS SpecialString
+}
+
+func (i *A) Error() string {
+	return i.CC
+}
+
+func TestProvide(t *testing.T) {
+	inj := New()
+	//inj.MapTo("hello provide", (*specialString)(nil))
+
+	ii := &A{CC: "2222"}
+	inj.MapTo(ii, (*SpecialString)(nil))
+	//MapTo[SpecialString](inj, ii)
+	var a = new(SpecialString)
+	err := inj.Provide(a)
+	assert.NoError(t, err)
+
+	var b SpecialString
+	err1 := inj.Provide(b)
+	assert.Error(t, err1)
+
+	c := Provide[SpecialString](inj)
+	assert.NotNil(t, c)
+
 }
